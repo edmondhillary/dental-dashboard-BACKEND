@@ -1,7 +1,7 @@
-// import * as dotenv from 'dotenv';
-// dotenv.config();
-// import express from 'express';
-// import cors from 'cors';
+import * as dotenv from 'dotenv';
+dotenv.config();
+import express from 'express';
+import cors from 'cors';
 // import { DBconnection } from '../database/database.connection.js';
 // import { auth } from '../api/auth/auth.controller.js';
 // import middleware from './middleware.js';
