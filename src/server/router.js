@@ -6,7 +6,7 @@ import Router from 'express';
 import { register, login} from '../api/auth/auth.controller.js';
 import patientRoutes  from  '../api/routers/patientsRoutes.js'
 import employeesRoutes from '../api/routers/employeesRoutes.js'
-import sessionRoutes from '../api/routers/sessionRoutes.js'
+// import sessionRoutes from '../api/routers/sessionRoutes.js'
 import budgetRoutes from  '../api/routers/budgetRoutes.js'
 import treatmentRoutes from '../api/routers/treatmentRoutes.js'
 import appointmentRoutes from  '../api/routers/appointmentRoutes.js'
@@ -22,10 +22,10 @@ router.post('/register',register );
 router.post('/login', login);
 router.use('/pacientes', patientRoutes);
 router.use('/empleados', employeesRoutes);
-router.use('/sesiones', sessionRoutes);
+// router.use('/sesiones', sessionRoutes); //CREO NO SE NECESITA// SE TRASLADA AL PACIENTE//
 router.use('/presupuestos', budgetRoutes);
 router.use('/tratamientos', treatmentRoutes);
-router.use('/appointments', appointmentRoutes);
+router.use('/citas', appointmentRoutes);
 
 
 

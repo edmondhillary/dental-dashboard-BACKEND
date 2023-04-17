@@ -1,11 +1,24 @@
 import employeeModel from "../models/employeeSchema.js";
 import patientModel from "../models/patientSchema.js";
 import treatmentModel from "../models/treatmentSchema.js";
+// import sessionModel from "../models/sessionSchema.js";
+import appointmentsModel from "../models/appointmentsSchema.js";
 import { Types } from "mongoose";
 const { ObjectId } = Types;
+import { checkIfPatientCanBeDeleted, createBudgetFromTreatmentCreated, createToothForTreatment } from "../utilities/generalFunctions.js";
+import teethModel from "../models/teethSchema.js";
+import budgetModel from "../models/budgetSchema.js";
 
 async function createTreatment({ fields }) {
+
   const treatment = await treatmentModel.create(fields);
+  
+  const createTeeht = await createToothForTreatment(fields.
+  teeth, fields.patient, teethModel, treatment._id , patientModel);
+  console.log(createTeeht);
+
+  await createBudgetFromTreatmentCreated(budgetModel,fields.patient, fields.employee, fields.cost,treatment._id ,  employeeModel , patientModel)
+     
   const addPatientToTreatment = await patientModel.findOneAndUpdate(
     { _id: new ObjectId(fields.patient) },
     { $push: { treatment: treatment._id } },
@@ -17,6 +30,11 @@ async function createTreatment({ fields }) {
     { $push: { treatments: treatment._id } },
     { new: true }
   );
+  // const addTreatmentToSessionModel = await sessionModel.findOneAndUpdate(
+  //   { patient: new ObjectId(fields.patient) },
+  //   { $push: { treatments: new ObjectId(treatment._id)  } },
+  //   { new: true }
+  // )
 
   const employee = await employeeModel.findOne({
     _id: new ObjectId(fields.employee),
@@ -52,13 +70,13 @@ async function createTreatment({ fields }) {
       );
     }
   }
+   
   return treatment;
 }
 
 async function getTreatmentsByQuery(filters) {
   let regexFilter = {};
-  let sortFilter = {};
-  console.log(filters); // { Name: 'guitarra', Brand: 'gibson' }
+  console.log(filters); 
   const keys = Object.keys(filters);
   for (const key of keys) {
     regexFilter[key] = { $regex: filters[key], $options: "-i" }; // filters[key] === Guitarra, gibson,music...
@@ -74,9 +92,9 @@ async function getTreatmentsByQuery(filters) {
 async function getTreatmentById({ id }) {
   const treatment = await treatmentModel
     .findOne({ _id: new ObjectId(id) })
-    .populate("patient")
-    .populate("employee")
-    .populate("employee2");
+    .populate("patient", "firstName lastName _id")
+    .populate("employee", "firstName lastName _id");
+    //.populate("employee2")
   return treatment;
 }
 
@@ -131,13 +149,20 @@ async function updateTreatmentById({ id, fieldsToUpdate }) {
 }
 
 async function deleteTreatmentById({ id }) {
-  const treatment = await treatmentModel.findOneAndDelete({ _id: id }).exec();
+  const deletedTreatment = await treatmentModel.findOneAndDelete({ _id: id }).exec();
   const employeeUpdated = await employeeModel.findOneAndUpdate(
     { treatments: new ObjectId(id) },
     { $pull: { treatments: id } },
     { new: true }
   );
+
   //removeTreatmentFromEmployee//arriba
+  const removeTreatmentFromTeethModel = await teethModel.findOneAndUpdate(
+
+    { treatment: new ObjectId(id) },
+    { $pull: { treatment: id } },
+    { new: true }
+    )
 
   const patientUpdated = await patientModel.findOneAndUpdate(
     { treatment: new ObjectId(id) },
@@ -163,8 +188,15 @@ if (commonTreatments.length > 0) {
     // Realiza alguna acción en consecuencia
   }
   //removeTreatmentFromPatient arriba//
- 
-  return treatment;
+ await checkIfPatientCanBeDeleted(
+  deletedTreatment.patient,
+  deletedTreatment.employee, 
+  // sessionModel,
+  employeeModel,
+  treatmentModel,
+  appointmentsModel,
+ )
+  return deletedTreatment;
 }
 
 export {

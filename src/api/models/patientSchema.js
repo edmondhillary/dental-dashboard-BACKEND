@@ -9,7 +9,6 @@ const patientSchema = new Schema(
     },
     secondName: {
       type: String,
-   
     },
     lastName: {
       type: String,
@@ -17,7 +16,7 @@ const patientSchema = new Schema(
     },
     email: {
       type: String,
-      required: true,
+    
     },
     phone: {
       type: String,
@@ -25,49 +24,49 @@ const patientSchema = new Schema(
     },
     dateOfBirth: {
       type: Date,
-      required: true,
+    
     },
     gender: {
       type: String,
-      required: true,
+   
     },
     address: {
       type: String,
-      required: true,
+     
     },
     city: {
       type: String,
-      required: true,
+      
     },
     dni: {
       type: String,
-      required: true,
+      
     },
     profesion: {
       type: String,
-      required: true,
+    
     },
 
     historialClinicoEnfermedades: [{
       type: String,
-      required: true,
+     
     }],
     historialDental: [{
       type: String,
-      required: true,
+   
     }],
-    alergias: {
+    alergias: [{
       type: String,
-    },
+    }],
     otrosCamposMedicos: {
       type: String,
     },
-    sessions: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Session",
-      },
-    ],
+    // sessions: [
+    //   {
+    //     type: Schema.Types.ObjectId,
+    //     ref: "Session",
+    //   },
+    // ],
     appointments: [
       {
         type: Schema.Types.ObjectId,
@@ -82,10 +81,14 @@ const patientSchema = new Schema(
     treatment:[{
       type: Schema.Types.ObjectId,
       ref: "Treatment",
+    }],
+    tooth: [{
+      type: Schema.Types.ObjectId,
+      ref: "Teeth",
     }]
   },
 
-  { timestamps: true, toObject: { getters: true }, toJSON: { getters: true } }
+  { timestamps: true, toObject: { getters: true }, toJSON: { getters: true , versionKey: false} }
 );
 
 patientSchema.virtual("displayName").get(function () {
