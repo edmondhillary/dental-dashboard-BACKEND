@@ -38,7 +38,9 @@ async function getBudgetById({ id }) {
 async function updateBudgetById({ id, fieldsToUpdate }) {
   const query = { _id: new ObjectId(id) };
   const updateBody = { $set: fieldsToUpdate };
-  const budgetToUpdate = await budgetModel .updateOne(query, updateBody, {new: true});
+  const options = { new: true, runValidators: true };
+  const budgetToUpdate = await budgetModel .findOneAndUpdate(query, updateBody,options).exec();
+
   return budgetToUpdate;
 }
 

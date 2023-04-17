@@ -73,11 +73,22 @@ const employeeSchema = new Schema({
   {
     type: Schema.Types.ObjectId,
     ref: 'Patient'
-  }]
+  }],
+  appointments: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Appointment'
+    }],
+  budgets: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Budget'
+    }
+  ],
   
 }, { timestamps: true,
   toObject: { getters: true },
-  toJSON: { getters: true }
+  toJSON: { getters: true , versionKey: false}
 });
 
 employeeSchema.virtual('displayName').get(function () { return this.firstName + " " + this.lastName })

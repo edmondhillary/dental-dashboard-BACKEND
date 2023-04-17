@@ -2,7 +2,15 @@ import mongoose from 'mongoose';
 
 const { Schema } = mongoose;
 
-const citaSchema = new Schema({
+const appointmentSchema = new Schema({
+  fechaInicio: {
+    type: Date,
+    required: true
+  },
+  fechaFin: {
+    type: Date,
+    required: true
+  },
   patient: {
     type: Schema.Types.ObjectId,
     ref: 'Patient',
@@ -13,19 +21,12 @@ const citaSchema = new Schema({
     ref: 'Employee',
     required: true
   },
-  fecha: {
-    type: Date,
-    required: true
-  },
-  duracion: {
-    type: Number,
-    required: true
-  },
+
   comentarios: {
     type: String
   }
-},{ timestamps: true, toObject: { getters: true }, toJSON: { getters: true } });
+},{ timestamps: true, toObject: { getters: true }, toJSON: { getters: true , versionKey: false}});
 
-const Appointment = mongoose.model('Appointment', citaSchema);
+const appointment = mongoose.model('Appointment', appointmentSchema);
 
-export default Appointment;
+export default appointment;
