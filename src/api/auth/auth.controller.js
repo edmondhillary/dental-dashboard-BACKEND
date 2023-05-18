@@ -1,4 +1,11 @@
 import * as authBll from './auth.bll.js';
+import jwt from 'jsonwebtoken';
+
+
+function unauthorized(response) {
+  response.status(401);
+  response.send('Unauthorized, you are not allow to access this route, ask for permissions ');
+}
 
 async function login(req, res) {
   const { email, password } = req.body;
@@ -21,7 +28,7 @@ async function login(req, res) {
 }
 
 async function register(req, res) {
-  const { email, password } = req.body;
+  const { email, password, gender, firstName, lastName, phone, dateOfBirth, address, role, dni, securityNumber, lastConnection } = req.body;
   let token;
 
   if (!email || !password) {
@@ -31,7 +38,7 @@ async function register(req, res) {
   }
 
   try {
-    token = await authBll.register({ email, password});
+    token = await authBll.register({ email, password, gender, firstName, lastName, phone, dateOfBirth, address, role, dni, securityNumber, lastConnection });
   } catch(err) {
     console.log(err)
     res.status(500);
@@ -39,6 +46,50 @@ async function register(req, res) {
   }
 
   res.json({ token });
+}
+export function isAdmin(request, response, next) {
+  const token = request.headers.authorization;
+  if (!token) {
+    return unauthorized(response);
+  }
+
+  jwt.verify(token, process.env.AUTH_SECRET_KEY, (error, payload) => {
+    if (error) {
+      console.error('ERROR!', error.message);
+      return unauthorized(response);
+    }
+
+    const userRole = payload.role;
+
+    if (userRole === 'admin' || userRole === 'superAdmin') {
+      next();
+    } else {
+      return unauthorized(response);
+    }
+  });
+}
+export function isSuperAdmin(request, response, next) {
+  const token = request.headers.authorization;
+  if (!token) {
+    return unauthorized(response);
+  }
+
+  jwt.verify(token, process.env.AUTH_SECRET_KEY, (error, payload) => {
+    if (error) {
+      console.error('ERROR!', error.message);
+      return unauthorized(response);
+    }
+
+    if (payload.role !== 'superAdmin') {
+      return unauthorized(response);
+    }
+
+    request.username = payload.username;
+    request.userId = payload.userId;
+    request.role = payload.role;
+
+    next();
+  });
 }
 
 export { login, register };

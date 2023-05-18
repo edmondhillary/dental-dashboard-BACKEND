@@ -3,9 +3,11 @@ import { hashSync, compare, compareSync } from 'bcrypt';
 import * as employeeRepository from '../repository/employeeRepo.js';
 
 function getToken(user) {
+  console.log('LA CONCHA SU MADRE TERMINE')
   const payload = {
     userId: user._id,
     email: user.email,
+  role: user.role,
   };
 
   const token = jwt.sign(payload, process.env.AUTH_SECRET_KEY, {
@@ -27,7 +29,7 @@ async function login({ email, password }) {
     throw new Error('Wrong credentials');
   }
 
-  const token = getToken({ email: dbUser.email, _id: dbUser._id });
+  const token = getToken({ email: dbUser.email, _id: dbUser._id,role: dbUser.role });
   if (!token) {
     throw new Error('Some problem generating token');
   }
@@ -35,9 +37,9 @@ async function login({ email, password }) {
   return token;
 }
 
-async function register({ email, password }) {
+async function register({ email, password, gender, firstName, lastName, phone, dateOfBirth, address, role, dni, securityNamber, lastConnection }) {
   const hashedPassword = hashSync(password, 10);
-  const dbUser = await employeeRepository.insert({ email, password: hashedPassword });
+  const dbUser = await employeeRepository.insert({ email, password: hashedPassword,  gender, firstName, lastName, phone, dateOfBirth, address, role, dni, securityNamber, lastConnection  });
   if (!dbUser) {
     throw new Error('Some problem at insert');
   }

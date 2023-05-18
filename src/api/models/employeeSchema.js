@@ -14,7 +14,6 @@ const employeeSchema = new Schema({
   firstName: {
     type: String,
 
-    
   },
   lastName: {
     type: String,
@@ -44,24 +43,19 @@ const employeeSchema = new Schema({
   
     
   },
-  city: {
-    type: String,
-    
-  },
   speciality: {
     type: String,
     
   },
   role: {
     type: String,
-    
     default: "Employee",
   },
   lastConnection: {
     type: Date,
     default: Date
   },
-  securityNamber: {
+  securityNumber: {
     type: Number,
     
   },
@@ -85,14 +79,29 @@ const employeeSchema = new Schema({
       ref: 'Budget'
     }
   ],
+  displayName: {
+    type: String,
+    get: function () {
+      return this.firstName + " " + this.lastName;
+    },
+  },
+  avatar: {
+    type: String,
+    default: "https://www.shutterstock.com/image-illustration/vector-medical-icon-dentist-doctor-260nw-1492048499.jpg"
+  }
   
 }, { timestamps: true,
   toObject: { getters: true },
   toJSON: { getters: true , versionKey: false}
 });
 
-employeeSchema.virtual('displayName').get(function () { return this.firstName + " " + this.lastName })
+
 
 const employeeModel = model('Employee', employeeSchema);
 
 export default employeeModel;
+
+//h: 'https://www.shutterstock.com/image-illustration/vector-medical-icon-dentist-doctor-260nw-1492048499.jpg'
+//h2: 'https://www.shutterstock.com/shutterstock/photos/1492021100/display_1500/stock-photo-vector-medical-icon-dentist-doctor-image-medic-dentist-avatar-illustration-doctor-dentist-in-1492021100.jpg'
+//m:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6Zb-nbVmJFpSSjOVAw_l40GMnGd9n0Bnn6w&usqp=CAU'
+//m2 : 'image.png'

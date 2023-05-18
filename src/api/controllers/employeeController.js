@@ -11,12 +11,24 @@ async function getAll( req, res ) {
       }
 }
 
+async function getUserByToken(req, res) {
+  try {
+    console.log(req)
+    const query = { _id: req.userId }
+    const { populateTreatments, populateBudgets, populatePatients, populateAppointments } = req.query;
+    const user = await employeeRepo.getUserByToken(query, { populateTreatments, populateBudgets, populatePatients, populateAppointments });
+    return res.json(user);
+  } catch (error) {
+    return res.status(error.status || 500).json(error.message);
+  }
+}
 async function getEmployeeById(req, res) {
   const { _id } = req.params;
   try{
 
       const employee = await employeeRepo.getEmployeeById( {_id} );
       if (employee) {
+        console.log(req, req.userId)
         res.json(employee);
         } else {
             res.status(404);
@@ -26,23 +38,6 @@ async function getEmployeeById(req, res) {
         return res.status(error.status || 500).json(error.message);
       }
 }
-
-async function getEmployeeByName(req, res) {
-  const { employeeName } = req.params;
-  try{
-
-      const employee = await employeeRepo.getEmployeeByName({ employeeName });
-      if (employee) {
-          res.json(employee);
-        } else {
-            res.status(404);
-            res.send('employee not found');
-        }
-    }catch (error) {
-        return res.status(error.status || 500).json(error.message);
-      }
-}
-
 
 
 async function updateEmployeeById(req, res) {
@@ -72,4 +67,4 @@ async function deleteEmployeeById(req, res) {
 
 
 
-export {getEmployeeByName, getAll, getEmployeeById , deleteEmployeeById ,updateEmployeeById  }
+export {getAll, getEmployeeById , deleteEmployeeById ,updateEmployeeById,getUserByToken }

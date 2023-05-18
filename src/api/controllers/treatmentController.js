@@ -1,4 +1,5 @@
 // import * as
+import treatmentModel from '../models/treatmentSchema.js';
 import * as treatmentRepo from '../repository/treatmentRepo.js'
 
 async function createTreatment(req, res, next) {
@@ -29,8 +30,8 @@ async function getTreatmentById(req, res) {
   
   async function getTreatmentsByQuery(req, res) {
       try {
-        const filters = req.query;
-        const treatment = await treatmentRepo.getTreatmentsByQuery(filters);
+        // const filters = req.query;
+        const treatment = await treatmentRepo.getTreatmentsByQuery(req.query);
         return res.json(treatment);
       } catch (error) {
         return res.status(error.status || 500).json(error.message);
@@ -53,13 +54,28 @@ async function getTreatmentById(req, res) {
   async function deleteTreatmentById(req, res) {
     const { id } = req.params;
 
-    try{
+    try {
         const deleteResponse = await treatmentRepo.deleteTreatmentById({ id });
-        res.write('ELIMINÓ TRATAMIENTO CON EXITO!!');
-        res.end();
-        
-      }catch (error) {
-          return res.status(error.status || 500).json(error.message);
-        }
+        res.status(200).json({ message: "Tratamiento eliminado", data: deleteResponse });
+  } catch (error) {
+    console.error("Error al eliminar el tratamiento:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
   }
-export { createTreatment,deleteTreatmentById, updateTreatmentById, getTreatmentById, getTreatmentsByQuery };
+}
+
+  const updateIsAddedToBudget = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const treatment = await treatmentModel.findByIdAndUpdate(id, { isAddedToBudget: true }, { new: true });
+  
+      if (!treatment) {
+        return res.status(404).json({ message: 'Tratamiento no encontrado' });
+      }
+  
+      res.status(200).json(treatment);
+    } catch (error) {
+      res.status(500).json({ message: 'Error al actualizar el tratamiento' });
+    }
+  };
+  
+export { createTreatment,deleteTreatmentById, updateTreatmentById, getTreatmentById, getTreatmentsByQuery, updateIsAddedToBudget };

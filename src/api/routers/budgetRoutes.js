@@ -1,6 +1,9 @@
 import express from 'express';
 import * as budgetController from '../controllers/budgetController.js';
 import budgetModel from '../models/budgetSchema.js';
+import { Types } from "mongoose";
+const { ObjectId } = Types;
+
 
 const router = express.Router();
 
@@ -10,6 +13,37 @@ router.get('/', budgetController.getBudgetsByQuery);
 router.get('/:id', budgetController.getBudgetById);
 // router.put('/:id', budgetController.updateBudgetById);
 router.delete('/:id', budgetController.deleteBudgetById);
+//buscar presuouestos por patientId: 
+router.get('/paciente/:patientId', async (req, res) => {
+  const { patientId } = req.params;
+  try {
+    const budgets = await budgetModel.find(
+      { patient: new ObjectId(patientId) },
+      )
+      .populate('treatment', '_id type ')
+      .populate('employee', 'firstName lastName');
+    
+    res.status(200).json({ budgets });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al buscar presupuestos por paciente' });
+  }
+})
+router.get('/empleado/:employeeId', async (req, res) => {
+  const { employeeId } = req.params;
+  try {
+    const budgets = await budgetModel.find(
+      { employee: new ObjectId(employeeId) },
+      )
+      .populate('treatment', '_id type ')
+      .populate('patient', 'firstName lastName');
+    
+    res.status(200).json({ budgets });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al buscar presupuestos por paciente' });
+  }
+})
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { discount, paid, cost } = req.body;
@@ -33,5 +67,86 @@ router.put('/:id', async (req, res) => {
       res.status(500).json({ message: 'Error al actualizar el presupuesto' });
     }
   });
+  // Ruta para obtener los pagos mensuales
+  router.get("/totales/pagos-mensuales", async (req, res) => {
+    const { year } = req.query;
+  
+    try {
+      const monthlyPayments = await budgetModel.aggregate([
+        {
+          $match: {
+            $expr: { $eq: [{ $year: "$createdAt" }, parseInt(year)] }
+          }
+        },
+        {
+          $group: {
+            _id: { $month: "$createdAt" },
+            total: { $sum: "$costWithDiscount" },
+            pagado: { $sum: "$paid" }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            mes: "$_id",
+            total: 1,
+            pagado: 1,
+            pendiente: { $subtract: ["$total", "$pagado"] }
+          }
+        }
+      ]);
+  
+      res.json(monthlyPayments);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Error al obtener los pagos mensuales" });
+    }
+  });
+  
+  router.get('/patients/unpaid', async (req, res) => {
+    try {
+      const unpaidPatients = await budgetModel.aggregate([
+        {
+          $lookup: {
+            from: 'patients',
+            localField: 'patient',
+            foreignField: '_id',
+            as: 'patientInfo'
+          }
+        },
+        {
+          $addFields: {
+            patientId: { $arrayElemAt: ['$patientInfo._id', 0] },
+            displayName: { $arrayElemAt: ['$patientInfo.displayName', 0] },
+            email: { $arrayElemAt: ['$patientInfo.email', 0] },
+            phone: { $arrayElemAt: ['$patientInfo.phone', 0] },
+            totalDebt: { $subtract: ['$costWithDiscount', '$paid'] }
+          }
+        },
+        {
+          $match: {
+            totalDebt: { $gt: 0 }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            patientId: 1,
+            displayName: 1,
+            email: 1,
+            phone: 1,
+            totalDebt: 1
+          }
+        }
+      ]);
+  
+      res.json(unpaidPatients);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  
+  
   
 export default router;

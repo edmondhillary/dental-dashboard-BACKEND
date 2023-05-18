@@ -17,7 +17,7 @@ async function createTreatment({ fields }) {
   teeth, fields.patient, teethModel, treatment._id , patientModel);
   console.log(createTeeht);
 
-  await createBudgetFromTreatmentCreated(budgetModel,fields.patient, fields.employee, fields.cost,treatment._id ,  employeeModel , patientModel)
+  // await createBudgetFromTreatmentCreated(budgetModel,fields.patient, fields.employee, fields.cost,treatment._id ,  employeeModel , patientModel, fields.discount)
      
   const addPatientToTreatment = await patientModel.findOneAndUpdate(
     { _id: new ObjectId(fields.patient) },
@@ -74,20 +74,51 @@ async function createTreatment({ fields }) {
   return treatment;
 }
 
-async function getTreatmentsByQuery(filters) {
-  let regexFilter = {};
-  console.log(filters); 
-  const keys = Object.keys(filters);
-  for (const key of keys) {
-    regexFilter[key] = { $regex: filters[key], $options: "-i" }; // filters[key] === Guitarra, gibson,music...
+async function getTreatmentsByQuery(query) {
+  console.log(query);
+
+  // Crear un objeto para almacenar los filtros con expresiones regulares
+  let queryFilter = {};
+
+  if (query.patient) {
+    queryFilter.patient = query.patient;
   }
+
+  if (typeof query.completed !== "undefined") {
+    queryFilter.completed = query.completed === "true";
+  }
+
+  // if (typeof query.isPaid !== "undefined") {
+  //   queryFilter.isPaid = query.isPaid === "true";
+  // }
+  if (query.type) {
+    queryFilter.type = { $regex: query.type, $options: "i" };
+  }
+  // Agrega el filtro para el campo 'cost' si está presente en la consulta
+  if (query.cost) {
+    queryFilter.cost = Number(query.cost);
+  }
+
+  // Agrega el filtro para el campo 'teeth' si está presente en la consulta
+  if (query.teeth) {
+    queryFilter.teeth = Number(query.teeth);
+  }
+  if (typeof query.isAddedToBudget !== "undefined") {
+    queryFilter.isAddedToBudget = query.isAddedToBudget === "true";
+  }
+  
   const getTreatmentsByFilters = await treatmentModel
-    .find(regexFilter)
+    .find(queryFilter)
+    // .populate('treatment', 'type _id')
     .sort({ createdAt: -1 })
     .exec();
+
   if (!getTreatmentsByFilters) throw new Error("No patient found.");
   return getTreatmentsByFilters;
 }
+
+
+
 // quizas ruta para ver que pacientes qeu tienen asignado un presupuesto estan debiendo dinero ...//
 async function getTreatmentById({ id }) {
   const treatment = await treatmentModel
@@ -146,58 +177,103 @@ async function updateTreatmentById({ id, fieldsToUpdate }) {
   }
   
   return treatmentToUpdate;
-}
+} 
 
 async function deleteTreatmentById({ id }) {
-  const deletedTreatment = await treatmentModel.findOneAndDelete({ _id: id }).exec();
-  const employeeUpdated = await employeeModel.findOneAndUpdate(
+  const deletedTreatment = await findAndDeleteTreatment(id);
+  console.log("Tratamiento eliminado:", deletedTreatment);
+
+  const employeeUpdated = await removeTreatmentFromEmployee(id);
+  console.log("Empleado actualizado:", employeeUpdated);
+
+  const removeTreatmentFromTeethModel = await removeTreatmentFromTeeth(id);
+  console.log("Diente actualizado:", removeTreatmentFromTeethModel);
+
+  const budgetUpdated = await updateBudget(id);
+  console.log("Presupuesto actualizado:", budgetUpdated);
+
+  const patientUpdated = await updatePatientAndEmployee(id, employeeUpdated);
+  console.log("Paciente actualizado:", patientUpdated);
+
+  return deletedTreatment;
+}
+
+async function findAndDeleteTreatment(id) {
+  const result = await treatmentModel.findOneAndDelete({ _id: new ObjectId(id) }).exec();
+  console.log("Resultado de findAndDeleteTreatment:", result);
+  return result;
+}
+
+async function removeTreatmentFromEmployee(id) {
+  const result = await employeeModel.findOneAndUpdate(
     { treatments: new ObjectId(id) },
     { $pull: { treatments: id } },
     { new: true }
   );
+  console.log("Resultado de removeTreatmentFromEmployee:", result);
+  return result;
+}
 
-  //removeTreatmentFromEmployee//arriba
-  const removeTreatmentFromTeethModel = await teethModel.findOneAndUpdate(
-
-    { treatment: new ObjectId(id) },
-    { $pull: { treatment: id } },
+async function removeTreatmentFromTeeth(id) {
+  const result = await teethModel.findOneAndUpdate(
+    { treatments: new ObjectId(id) },
+    { $pull: { treatments: id } },
     { new: true }
-    )
+  );
+  console.log("Resultado de removeTreatmentFromTeeth:", result);
+  return result;
+}
 
+async function updateBudget(id) {
+  const budget = await budgetModel.findOne({ treatment: new ObjectId(id) });
+
+  if (!budget) {
+    console.log("No se encontró un presupuesto con el tratamiento especificado.");
+    return null;
+  }
+
+  if (budget.treatment.length === 1) {
+    const result = await budgetModel.findByIdAndDelete(budget._id);
+    console.log("Resultado de updateBudget (eliminación):", result);
+    return result;
+  } else {
+    const result = await budgetModel.findOneAndUpdate(
+      { _id: budget._id },
+      { $pull: { treatment: id } },
+      { new: true }
+    );
+    console.log("Resultado de updateBudget (actualización):", result);
+    return result;
+  }
+}
+
+
+async function updatePatientAndEmployee(id, employeeUpdated) {
   const patientUpdated = await patientModel.findOneAndUpdate(
     { treatment: new ObjectId(id) },
     { $pull: { treatment: id } },
     { new: true }
   );
+
   if (!patientUpdated) {
-    console.log(`No se encontró ningún paciente con el tratamiento ${id}`);
-    // Realiza alguna acción en consecuencia
+    console.log("No se encontró un paciente con el tratamiento para actualizar.");
   } else {
-    console.log(`Paciente actualizado: ${patientUpdated}`);
+    console.log("Paciente actualizado:", patientUpdated);
     const commonTreatments = employeeUpdated.treatments.filter(treatment => patientUpdated.treatment.includes(treatment._id));
-if (commonTreatments.length > 0) {
-  // Si hay tratamientos en común, no se borra al paciente de la lista de pacientes del empleado
-} else {
-  // Si no hay tratamientos en común, se borra al paciente de la lista de pacientes del empleado
-  const index = employeeUpdated.patients.indexOf(patientUpdated._id);
-  if (index > -1) {
-    employeeUpdated.patients.splice(index, 1);
-    await employeeUpdated.save();
+
+    if (commonTreatments.length === 0) {
+      const index = employeeUpdated.patients.indexOf(patientUpdated._id);
+      if (index > -1) {
+        employeeUpdated.patients.splice(index, 1);
+        await employeeUpdated.save();
+        console.log("Paciente eliminado de la lista de pacientes del empleado.");
+      }
+    }
   }
+
+  return patientUpdated;
 }
-    // Realiza alguna acción en consecuencia
-  }
-  //removeTreatmentFromPatient arriba//
- await checkIfPatientCanBeDeleted(
-  deletedTreatment.patient,
-  deletedTreatment.employee, 
-  // sessionModel,
-  employeeModel,
-  treatmentModel,
-  appointmentsModel,
- )
-  return deletedTreatment;
-}
+
 
 export {
   createTreatment,
