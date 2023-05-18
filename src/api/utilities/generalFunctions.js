@@ -23,7 +23,7 @@ export async function checkIfPatientCanBeDeleted(patientId, employeeId, treatmen
       { existingTreatment });
   
   // Si ningún empleado, cita, sesión o tratamiento tiene al paciente, borrar al paciente
-  if (!existingAppointments && !existingSession && !existingTreatment) {
+  if (!existingAppointments  && !existingTreatment) {
     await employeeModel.findOneAndUpdate(
       { _id: new ObjectId(employeeId) },
       { $pull: { patients: new ObjectId(patientId) } },
@@ -56,7 +56,7 @@ export async function createToothForTreatment(numberTreatment, patientId, teethM
   }
 }
 
-export async function createBudgetFromTreatmentCreated (budgetModel, patientId, employeeId,  treatmentCost, treatmentId, employeeModel,patientModel) {
+export async function createBudgetFromTreatmentCreated (budgetModel, patientId, employeeId,  treatmentCost, treatmentId, employeeModel,patientModel, discountTreatment) {
 
   try{
     const budget = await budgetModel.create({
@@ -64,7 +64,8 @@ export async function createBudgetFromTreatmentCreated (budgetModel, patientId, 
       patient: new ObjectId(patientId),
       employee: new ObjectId(employeeId),
       cost: treatmentCost,
-      treatment: treatmentId
+      treatment: treatmentId,
+      discount: discountTreatment,
 
     });
     const addBudgetToemployee = await employeeModel.findOneAndUpdate(

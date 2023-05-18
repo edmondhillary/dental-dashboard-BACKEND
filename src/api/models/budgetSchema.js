@@ -13,11 +13,11 @@ const budgetSchema = new Schema({
   costWithDiscount: {
     type: Number
   },
-  treatment: {
-    type: String,
+  treatment: [{
+    type: Schema.Types.ObjectId,
     ref: 'Treatment',
     required: true,
-  },
+  }],
   discount: {
     type: Number,
     min: 0,
@@ -33,18 +33,32 @@ const budgetSchema = new Schema({
     required: true,
     default: 0
   },
-  employee:{
+  employee:[{
    type: Schema.Types.ObjectId,
    ref: 'Employee',
    required: true
- }
+ }],
+ fechaInicio: {
+  type: Date,
+   required: true,
+   default: Date.now
+ },
+
   }, {
     timestamps: true,
     toObject: { getters: true },
     toJSON: { getters: true, versionKey: false },
     setDefaultsOnInsert: true // se agrega esta opción
   } );
- 
+  // budgetSchema.virtual('cost').get(function() {
+  //   let cost = 0;
+  
+  //   for (let i = 0; i < this.treatment.length; i++) {
+  //     cost += this.treatment[i].cost;
+  //   }
+  
+  //   return cost;
+  // });
   budgetSchema.virtual('deudaPaciente').get(function() {
   
     return this.costWithDiscount - this.paid ;
@@ -69,7 +83,7 @@ const budgetSchema = new Schema({
   
   //   next();
   // });
-  
+ 
 
   budgetSchema.path('discount').validate(function(value) {
     console.log("Validating discount",this.get('cost'), value);
@@ -106,7 +120,7 @@ const budgetSchema = new Schema({
     if (!update.cost && !update.discount) {
       return next();
     }
-  
+  console.log( 'descuebnto: ', update.discount )
     const discount = update.discount || this._update.discount || 0;
     const cost = update.cost || this._update.cost || 0;
     const priceWithDiscount = cost * (100 - discount) / 100;

@@ -14,24 +14,31 @@ async function getAllPatients (){
 }
 
 async function getPatientsByQuery(filters) {
-
-    let regexFilter = {};
-    let sortFilter = {};
-   console.log(filters) // { Name: 'guitarra', Brand: 'gibson' }
-   const keys = Object.keys(filters);
-   for (const key of keys) {
-    regexFilter[key] = {$regex: filters[key], $options: '-i'} // filters[key] === Guitarra, gibson,music...
-   }
-        const getPacientsByFilterts = await patientModel.find(regexFilter);
-        if (!getPacientsByFilterts) throw new Error('No patient found.');
-        return getPacientsByFilterts;
-
+  let regexFilter = {};
+  console.log(filters) // { Name: 'guitarra', Brand: 'gibson' }
+  const keys = Object.keys(filters);
+  for (const key of keys) {
+    regexFilter[key] = {$regex: filters[key], $options: 'i'} // utilizamos 'i' para insensible a mayúsculas y minúsculas
+  }
+  
+  const getPacientsByFilterts = await patientModel.find(regexFilter);
+  if (!getPacientsByFilterts) throw new Error('No patient found.');
+  return getPacientsByFilterts;
 }
 
 // quizas ruta para ver que pacientes qeu tienen asignado un presupuesto estan debiendo dinero ...//
 async function getPatientById({ id }) {
-  const patient = await patientModel .findOne({ _id: new ObjectId(id) }).populate('budget')
-  // .populate('sessions');
+  const patient = await patientModel.findOne({ _id: new ObjectId(id) })
+  // .populate('treatment')
+    .populate('budget')
+    .populate({
+      path: 'treatment',
+      populate: {
+        path: 'employee',
+        select: 'id firstName lastName',
+        model: 'Employee',
+      },
+    })
   return patient;
 }
 
@@ -39,7 +46,7 @@ async function getPatientById({ id }) {
 async function updatePatientById({ id, fieldsToUpdate }) {
   const query = { _id: new ObjectId(id) };
   const updateBody = { $set: fieldsToUpdate };
-  const patientToUpdate = await patientModel .updateOne(query, updateBody);
+  const patientToUpdate = await patientModel .findOneAndUpdate(query, updateBody, {new: true});
   return patientToUpdate;
 }
 

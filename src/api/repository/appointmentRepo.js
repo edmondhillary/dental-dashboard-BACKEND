@@ -8,7 +8,7 @@ import { checkIfPatientCanBeDeleted } from "../utilities/generalFunctions.js";
 const { ObjectId } = Types;
 
 async function createAppointment({ fields }) {
-  const { employee, fechaInicio, fechaFin } = fields;
+  const { employee, fechaInicio, fechaFin , patient, comentarios} = fields;
 
   // Verificar si existe una cita previa para este empleado que se solape con el intervalo de tiempo de la nueva cita
   const existingAppointments = await appointmentsModel.find({
@@ -36,7 +36,7 @@ async function createAppointment({ fields }) {
 
   // Añadir nueva cita al paciente
   await patientModel.findOneAndUpdate(
-    { _id: new ObjectId(fields.patient) },
+    { _id: new ObjectId(patient) },
     { $push: { appointments: newAppointment._id } },
     { new: true }
   );

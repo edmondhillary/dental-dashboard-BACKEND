@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 function unauthorized(response) {
   response.status(401);
-  response.send('Unauthorized');
+  response.send('Unauthorized, you need to be logged in');
 }
 
 function middleware(request, response, next) {

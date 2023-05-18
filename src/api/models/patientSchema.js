@@ -16,7 +16,6 @@ const patientSchema = new Schema(
     },
     email: {
       type: String,
-    
     },
     phone: {
       type: String,
@@ -24,36 +23,25 @@ const patientSchema = new Schema(
     },
     dateOfBirth: {
       type: Date,
-    
     },
     gender: {
       type: String,
-   
+      enum: ["Masculino", "Femenino"],
     },
     address: {
       type: String,
-     
-    },
-    city: {
-      type: String,
-      
     },
     dni: {
       type: String,
-      
     },
     profesion: {
       type: String,
-    
     },
-
     historialClinicoEnfermedades: [{
       type: String,
-     
     }],
     historialDental: [{
       type: String,
-   
     }],
     alergias: [{
       type: String,
@@ -61,19 +49,12 @@ const patientSchema = new Schema(
     otrosCamposMedicos: {
       type: String,
     },
-    // sessions: [
-    //   {
-    //     type: Schema.Types.ObjectId,
-    //     ref: "Session",
-    //   },
-    // ],
     appointments: [
       {
         type: Schema.Types.ObjectId,
         ref: "Appointment",
       }
     ],
-
     budget: [{
       type: Schema.Types.ObjectId,
       ref: "Budget",
@@ -85,18 +66,42 @@ const patientSchema = new Schema(
     tooth: [{
       type: Schema.Types.ObjectId,
       ref: "Teeth",
-    }]
-  },
-
-  { timestamps: true, toObject: { getters: true }, toJSON: { getters: true , versionKey: false} }
+    }],
+    firstVisit: {
+      type: Boolean,
+      default: true,
+    },
+    avatar: {
+      type: String,
+    },
+    displayName: {
+      type: String,
+      get: function () {
+        return this.firstName + " " + this.lastName;
+      },
+    },
+    edad: {
+      type: Number,
+      get: function () {
+        return moment().diff(this.dateOfBirth, 'years');
+    }
+  }
+},
+  { timestamps: true, toObject: { getters: true }, toJSON: { getters: true, versionKey: false } }
 );
 
-patientSchema.virtual("displayName").get(function () {
-  return this.firstName + " " + this.lastName;
+patientSchema.pre('validate', function(next) {
+  if (this.genero === 'Femenino') {
+    this.avatar = 'https://w7.pngwing.com/pngs/681/929/png-transparent-avatar-user-profile-computer-icons-woman-avatar-child-face-heroes.png';
+  } else if (this.genero === 'Masculino') {
+    this.avatar = 'https://e7.pngegg.com/pngimages/573/452/png-clipart-avatar-drawing-icon-men-s-avatar-face-heroes.png';
+  }
+  next();
 });
-patientSchema.virtual('edad').get(function() {
-  return moment().diff(this.dateOfBirth, 'years');
-});
+// patientSchema.virtual("displayName").get(function () {
+//   return this.firstName + " " + this.lastName;
+// });
+
 const patientModel = model("Patient", patientSchema);
 
 export default patientModel;

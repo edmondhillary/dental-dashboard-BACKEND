@@ -8,8 +8,8 @@ async function getByEmail({ email }) {
   return user;
 }
 
-async function insert({ password, email }) {
-  const user = await employeeModel.create({ password, email });
+async function insert({ email, password, gender, firstName, lastName, phone, dateOfBirth, address, role, dni, securityNumber, lastConnection }) {
+  const user = await employeeModel.create({ email, password, gender, firstName, lastName, phone, dateOfBirth, address, role, dni, securityNumber, lastConnection });
   return user;
 }
 
@@ -18,22 +18,26 @@ async function getAllEmployees() {
   return emplloyees;
 }
 
-async function getEmployeeByName({ employeeName }) {
-  const employee = await employeeModel.find({
-    firstName: new RegExp(employeeName, "i"),
-  });
-  return employee;
+ async function getUserByToken(query, params) {
+  const {populateTreatments, populateBudgets, populatePatients, populateAppointments} = params;
+  const users = await employeeModel.findOne(query)
+  .select('-password -email').exec();
+  if (populateTreatments == 'true') await users.populate('treatments');
+  if (populateBudgets == 'true') await users.populate('budgets');
+  if (populatePatients == 'true') await users.populate('patients');
+  if (populateAppointments == 'true') await users.populate('appointments');
+  if (!users) throw new Error('No user found.');
+  return users;
 }
-
 async function getEmployeeById( { _id  } ) {
-  const employee = await employeeModel .findById({ _id: new ObjectId(_id ) })
+  const employee = await employeeModel .findById({ _id: new ObjectId(_id ) }).populate('treatments').populate('budgets').populate('patients').populate('appointments');
   return employee;
 }
 
 async function updateEmployeeById({ id, fieldsToUpdate }) {
   const query = { _id: new ObjectId(id) };
   const updateBody = { $set: fieldsToUpdate };
-  const employeeToUpdate = await employeeModel.updateOne(query, updateBody);
+  const employeeToUpdate = await employeeModel.findOneAndUpdate(query, updateBody, {new: true});
   return employeeToUpdate;
 }
 
@@ -49,5 +53,6 @@ export {
   getEmployeeById,
   updateEmployeeById,
   deleteEmployeeById,
-  getEmployeeByName,
+  getUserByToken,
+
 };
