@@ -3,14 +3,15 @@ import * as appointmentController from "../controllers/appointmentController.js"
 import patientModel from "../models/patientSchema.js";
 import appointmentsModel from "../models/appointmentsSchema.js";
 import employeeModel from "../models/employeeSchema.js";
+import { isAdmin } from "../auth/auth.controller.js";
 
 const router = express.Router();
 
-router.post("/", appointmentController.createAppointment);
+router.post("/", isAdmin,  appointmentController.createAppointment);
 // router.get('/', appointmentController.getAppointmentsByQuery);
 router.get("/:id", appointmentController.getAppointmentById);
-router.put("/:id", appointmentController.updateAppointmentById);
-router.delete("/:id", appointmentController.deleteAppointmentById);
+router.put("/:id", isAdmin,  appointmentController.updateAppointmentById);
+router.delete("/:id", isAdmin,  appointmentController.deleteAppointmentById);
 
 //RUT de todas las citas que tiene/ ha tenido un paciente//
 router.get("/pacientes/:id/", async (req, res) => {

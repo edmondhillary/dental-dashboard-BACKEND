@@ -2,6 +2,7 @@ import express from 'express';
 import * as budgetController from '../controllers/budgetController.js';
 import budgetModel from '../models/budgetSchema.js';
 import { Types } from "mongoose";
+import { isAdmin } from '../auth/auth.controller.js';
 const { ObjectId } = Types;
 
 
@@ -12,7 +13,7 @@ router.post('/', budgetController.createBudget);
 router.get('/', budgetController.getBudgetsByQuery);
 router.get('/:id', budgetController.getBudgetById);
 // router.put('/:id', budgetController.updateBudgetById);
-router.delete('/:id', budgetController.deleteBudgetById);
+router.delete('/:id', isAdmin,  budgetController.deleteBudgetById);
 //buscar presuouestos por patientId: 
 router.get('/paciente/:patientId', async (req, res) => {
   const { patientId } = req.params;
@@ -44,7 +45,7 @@ router.get('/empleado/:employeeId', async (req, res) => {
     res.status(500).json({ message: 'Error al buscar presupuestos por paciente' });
   }
 })
-router.put('/:id', async (req, res) => {
+router.put('/:id',isAdmin, async (req, res) => {
     const { id } = req.params;
     const { discount, paid, cost } = req.body;
     

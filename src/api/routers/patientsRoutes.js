@@ -12,7 +12,7 @@ router.post('/', patientController.createPatient);
 router.get('/' , patientController.getPatientsByQuery);
 router.get('/:id', patientController.getPatientById);
 router.put('/:id', patientController.updatePatientById);
-router.delete('/:id', patientController.deletePatientById);
+router.delete('/:id',isAdmin, patientController.deletePatientById);
 
 router.get("/pacientes/ageRangeCount", async (req, res) => {
     try {

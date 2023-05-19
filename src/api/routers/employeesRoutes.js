@@ -1,14 +1,15 @@
 import express from 'express';
 import * as employeeController from '../controllers/employeeController.js';
 import employeeModel from '../models/employeeSchema.js';
+import { isSuperAdmin } from '../auth/auth.controller.js';
 // import employeeModel from '../models/employeeSchema.js';
 
 const router = express.Router();
 
 router.get('/', employeeController.getAll);
 router.get('/id/:_id', employeeController.getEmployeeById);
-router.put('/:id', employeeController.updateEmployeeById);
-router.delete('/id/:id', employeeController.deleteEmployeeById);
+router.put('/:id', isSuperAdmin,  employeeController.updateEmployeeById);
+router.delete('/id/:id', isSuperAdmin,  employeeController.deleteEmployeeById);
 router.get('/info', employeeController.getUserByToken);
 router.get('/busqueda', async (req, res) => {
     const { displayName } = req.query;
