@@ -3,7 +3,8 @@ import { hashSync, compare, compareSync } from 'bcrypt';
 import * as employeeRepository from '../repository/employeeRepo.js';
 
 function getToken(user) {
-  console.log('LA CONCHA SU MADRE TERMINE')
+const AUTH_EXPIRES_IN = "24h"
+  // console.log('LA CONCHA SU MADRE TERMINE')
   const payload = {
     userId: user._id,
     email: user.email,
@@ -12,7 +13,7 @@ function getToken(user) {
 
   const token = jwt.sign(payload, process.env.AUTH_SECRET_KEY, {
     // expiresIn: 60 * 60 // in secs
-    expiresIn: process.env.AUTH_EXPIRES_IN // string
+    expiresIn: AUTH_EXPIRES_IN // string
   });
 
   return token;
