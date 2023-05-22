@@ -64,7 +64,7 @@ async function createPatient({ fields }) {
   });
 
   if (existingPatient) {
-    throw new Error('El paciente ya está registrado.');
+    throw new Error('El paciente ya está registrado. el telefono o el Email ya estan en la base de datos.');
   }
 
   const patient = await patientModel.create(fields);
