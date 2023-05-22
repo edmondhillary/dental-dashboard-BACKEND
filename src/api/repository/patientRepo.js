@@ -4,69 +4,72 @@ import teethModel from "../models/teethSchema.js";
 const { ObjectId } = Types;
 import { Types } from "mongoose";
 
-
-
-
-async function getAllPatients (){
-  const patients = await patientModel .find({});
+async function getAllPatients() {
+  const patients = await patientModel.find({});
   return patients;
-
 }
 
 async function getPatientsByQuery(filters) {
   let regexFilter = {};
-  console.log(filters) // { Name: 'guitarra', Brand: 'gibson' }
+  console.log(filters); // { Name: 'guitarra', Brand: 'gibson' }
   const keys = Object.keys(filters);
   for (const key of keys) {
-    regexFilter[key] = {$regex: filters[key], $options: 'i'} // utilizamos 'i' para insensible a mayúsculas y minúsculas
+    regexFilter[key] = { $regex: filters[key], $options: "i" }; // utilizamos 'i' para insensible a mayúsculas y minúsculas
   }
-  
+
   const getPacientsByFilterts = await patientModel.find(regexFilter);
-  if (!getPacientsByFilterts) throw new Error('No patient found.');
+  if (!getPacientsByFilterts) throw new Error("No patient found.");
   return getPacientsByFilterts;
 }
 
 // quizas ruta para ver que pacientes qeu tienen asignado un presupuesto estan debiendo dinero ...//
 async function getPatientById({ id }) {
-  const patient = await patientModel.findOne({ _id: new ObjectId(id) })
-  // .populate('treatment')
-    .populate('budget')
+  const patient = await patientModel
+    .findOne({ _id: new ObjectId(id) })
+    // .populate('treatment')
+    .populate("budget")
     .populate({
-      path: 'treatment',
+      path: "treatment",
       populate: {
-        path: 'employee',
-        select: 'id firstName lastName',
-        model: 'Employee',
+        path: "employee",
+        select: "id firstName lastName",
+        model: "Employee",
       },
-    })
+    });
   return patient;
 }
-
 
 async function updatePatientById({ id, fieldsToUpdate }) {
   const query = { _id: new ObjectId(id) };
   const updateBody = { $set: fieldsToUpdate };
-  const patientToUpdate = await patientModel .findOneAndUpdate(query, updateBody, {new: true});
+  const patientToUpdate = await patientModel.findOneAndUpdate(
+    query,
+    updateBody,
+    { new: true }
+  );
   return patientToUpdate;
 }
 
 async function deletePatientById({ id }) {
-  const patient = await patientModel .findOneAndDelete({ _id: id }).exec();
+  const patient = await patientModel.findOneAndDelete({ _id: id }).exec();
 
   return patient;
 }
 async function createPatient({ fields }) {
-  try {
-    const existingPatient = await patientModel.find(fields.email)
-    if (existingPatient) {
-      return res.status(409).json({ error: 'El paciente ya está registrado.' });
-    }
-    const patient = await patientModel.create(fields);
-    return patient;
-  }catch (error){
-    return res.status(error.status || 500).json(error.message);
-  }
+  const existingPatient = await patientModel.find(fields.email);
 
+  if (existingPatient) {
+    return new Error();
+  }
+  const patient = await patientModel.create(fields);
+  return patient;
 }
 
-export {  getAllPatients, getPatientById, updatePatientById, deletePatientById , getPatientsByQuery , createPatient};
+export {
+  getAllPatients,
+  getPatientById,
+  updatePatientById,
+  deletePatientById,
+  getPatientsByQuery,
+  createPatient,
+};
