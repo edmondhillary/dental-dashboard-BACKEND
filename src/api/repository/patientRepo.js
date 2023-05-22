@@ -56,8 +56,17 @@ async function deletePatientById({ id }) {
   return patient;
 }
 async function createPatient({ fields }) {
+  try {
+    const existingPatient = await patientModel.find(fields.email)
+    if (existingPatient) {
+      return res.status(409).json({ error: 'El paciente ya está registrado.' });
+    }
     const patient = await patientModel.create(fields);
-
     return patient;
+  }catch (error){
+    return res.status(error.status || 500).json(error.message);
+  }
+
 }
+
 export {  getAllPatients, getPatientById, updatePatientById, deletePatientById , getPatientsByQuery , createPatient};
