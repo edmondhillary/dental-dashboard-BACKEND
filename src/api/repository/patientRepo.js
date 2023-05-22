@@ -56,12 +56,19 @@ async function deletePatientById({ id }) {
   return patient;
 }
 async function createPatient({ fields }) {
-  const existingPatient = await patientModel.find(fields.email);
+  const { email, phone } = fields;
+
+  // Verificar si el paciente ya existe en la base de datos por email o número de teléfono
+  const existingPatient = await patientModel.findOne({
+    $or: [{ email }, { phone }],
+  });
 
   if (existingPatient) {
-    return new Error();
+    throw new Error('El paciente ya está registrado.');
   }
+
   const patient = await patientModel.create(fields);
+
   return patient;
 }
 
