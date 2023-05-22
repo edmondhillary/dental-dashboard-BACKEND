@@ -9,18 +9,28 @@ async function getAllPatients() {
   return patients;
 }
 
-async function getPatientsByQuery(filters) {
-  let regexFilter = {};
-  console.log(filters); // { Name: 'guitarra', Brand: 'gibson' }
-  const keys = Object.keys(filters);
-  for (const key of keys) {
-    regexFilter[key] = { $regex: filters[key], $options: "i" }; // utilizamos 'i' para insensible a mayúsculas y minúsculas
+async function getPatientsByQuery(displayName) {
+  const regexFilter = {};
+  if (displayName) {
+    regexFilter.displayName = { $regex: displayName, $options: "i" };
   }
 
-  const getPacientsByFilterts = await patientModel.find(regexFilter);
-  if (!getPacientsByFilterts) throw new Error("No patient found.");
-  return getPacientsByFilterts;
+  const patients = await patientModel.aggregate([
+    {
+      $addFields: {
+        displayName: { $concat: ["$firstName", " ", "$lastName"] }
+      }
+    },
+    {
+      $match: regexFilter
+    }
+  ]);
+
+  if (!patients) throw new Error("No patients found.");
+  return patients;
 }
+
+
 
 // quizas ruta para ver que pacientes qeu tienen asignado un presupuesto estan debiendo dinero ...//
 async function getPatientById({ id }) {

@@ -28,14 +28,15 @@ async function getPatientById(req, res) {
 }
 
 async function getPatientsByQuery(req, res) {
-    try {
-      const filters = req.query;
-      const patients = await patientRepo.getPatientsByQuery(filters);
-      return res.json(patients);
-    } catch (error) {
-      return res.status(error.status || 500).json(error.message);
-    }
+  try {
+    const { displayName } = req.query;
+    const patients = await patientRepo.getPatientsByQuery(displayName);
+    return res.json(patients);
+  } catch (error) {
+    return res.status(error.status || 500).json(error.message);
   }
+}
+
 
 
 async function updatePatientById(req, res) {
