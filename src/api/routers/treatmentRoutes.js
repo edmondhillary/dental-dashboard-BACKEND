@@ -67,22 +67,29 @@ router.get('/budgets/filtros', async (req, res, next) => {
   
   router.get('/employees/:employeeId', async (req, res) => {
     try {
-      const { employeeId } = req.params;
-      const page = parseInt(req.query.page) || 1;
-      const limit = 15;
-      const skip = (page - 1) * limit;
-    
-      const treatments = await treatmentModel
-        .find({ employee: employeeId })
-        .skip(skip)
-        .limit(limit)
-        .populate('patient', 'firstName lastName _id phone alergias createdAt');
-    
-      res.json(treatments);
+        const { employeeId } = req.params;
+        const { page = 1, limit = 15 } = req.query;
+
+        const treatments = await treatmentModel
+            .find({ employee: employeeId })
+            .populate('patient', 'firstName lastName _id phone alergias createdAt')
+            .limit(limit * 1)
+            .skip((page - 1) * limit)
+            .exec();
+
+        // Obtén el total de documentos en la colección Tratamientos
+        const total = await treatmentModel.countDocuments({ employee: employeeId });
+
+        res.json({
+            treatments,
+            totalPages: Math.ceil(total / limit),
+            currentPage: page
+        });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
-  });
+});
+
   
   
 export default router;
