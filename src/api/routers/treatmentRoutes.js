@@ -68,13 +68,21 @@ router.get('/budgets/filtros', async (req, res, next) => {
   router.get('/employees/:employeeId', async (req, res) => {
     try {
       const { employeeId } = req.params;
-  
-      const treatments = await treatmentModel.find({ employee: employeeId }).populate('patient', 'firstName lastName _id phone alergias createdAt');
-  
+      const page = parseInt(req.query.page) || 1;
+      const limit = 15;
+      const skip = (page - 1) * limit;
+    
+      const treatments = await treatmentModel
+        .find({ employee: employeeId })
+        .skip(skip)
+        .limit(limit)
+        .populate('patient', 'firstName lastName _id phone alergias createdAt');
+    
       res.json(treatments);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   });
+  
   
 export default router;
