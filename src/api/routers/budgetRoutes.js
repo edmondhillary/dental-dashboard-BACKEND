@@ -17,19 +17,33 @@ router.delete('/:id', isAdmin, budgetController.deleteBudgetById);
 //buscar presuouestos por patientId: 
 router.get('/paciente/:patientId', async (req, res) => {
   const { patientId } = req.params;
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = 15;
+  const skip = (page - 1) * limit;
+
   try {
-    const budgets = await budgetModel.find(
-      { patient: new ObjectId(patientId) },
-      )
-      .populate('treatment', '_id type ')
-      .populate('employee', 'firstName lastName');
-    
-    res.status(200).json({ budgets });
+    const budgets = await budgetModel
+      .find({ patient: new ObjectId(patientId) })
+      .populate('treatment', '_id type')
+      .populate('employee', 'firstName lastName')
+      .skip(skip)
+      .limit(limit);
+
+    // Para obtener el número total de documentos (para páginas adicionales)
+    const total = await budgetModel.countDocuments({ patient: new ObjectId(patientId) });
+
+    res.status(200).json({
+      totalDocuments: total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      budgets
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al buscar presupuestos por paciente' });
   }
-})
+});
+
 router.get('/empleado/:employeeId', async (req, res) => {
   const { employeeId } = req.params;
   const page = parseInt(req.query.page, 10) || 1;
