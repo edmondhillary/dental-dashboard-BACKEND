@@ -17,6 +17,7 @@ router.get("/todos", async (req, res) => {
 
     const patients = await patientModel
       .find({})
+      .sort({ lastName: 1 }) // Ordenar por displayName de forma ascendente (A-Z)
       .skip(startIndex)
       .limit(pageSize)
       .exec();
@@ -29,6 +30,7 @@ router.get("/todos", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
 
 
 router.get('/' , patientController.getPatientsByQuery);
