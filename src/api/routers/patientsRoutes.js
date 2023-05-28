@@ -117,20 +117,31 @@ router.get("/firstVisitCount/:year/:month?", async (req, res) => {
 router.get("/employee/:employeeId", async (req, res) => {
   try {
     const { employeeId } = req.params;
+    const { page, pageSize } = req.query;
+
+    // Calcula el índice de inicio según la página y el tamaño de página
+    const startIndex = (page - 1) * pageSize;
 
     const employee = await employeeModel.findById(employeeId);
     if (!employee) {
       return res.status(404).json({ message: "Empleado no encontrado" });
     }
 
-    const patients = await patientModel.find({
+    const patients = await patientModel
+      .find({ _id: { $in: employee.patients } })
+      .skip(startIndex)
+      .limit(pageSize);
+
+    const totalCount = await patientModel.countDocuments({
       _id: { $in: employee.patients },
     });
 
-    res.json(patients);
+    res.set("X-Total-Count", totalCount); // Envía el total de registros en la respuesta
+    res.json({patients, totalCount   });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
+
 
 export default router;
