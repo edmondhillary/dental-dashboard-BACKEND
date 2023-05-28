@@ -9,6 +9,28 @@ const router = express.Router();
 
 router.post("/", patientController.createPatient);
 // router.get('/', patientController.getAll);
+router.get("/todos", async (req, res) => {
+  try {
+    const { page, pageSize } = req.query;
+
+    const startIndex = (page - 1) * pageSize;
+
+    const patients = await patientModel
+      .find({})
+      .skip(startIndex)
+      .limit(pageSize)
+      .exec();
+
+    const totalCount = await patientModel.countDocuments({});
+
+    res.set("X-Total-Count", totalCount);
+    res.json({ patients, totalCount });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
 router.get('/' , patientController.getPatientsByQuery);
 router.get("/:id", patientController.getPatientById);
 router.put("/:id", patientController.updatePatientById);
