@@ -148,6 +148,8 @@ router.put('/:id',isAdmin, async (req, res) => {
         {
           $addFields: {
             patientId: { $arrayElemAt: ['$patientInfo._id', 0] },
+            firstName: { $arrayElemAt: ['$patientInfo.firstName',0]},
+            lastName: { $arrayElemAt: ['$patientInfo.lastName',0]},
             displayName: { $arrayElemAt: ['$patientInfo.displayName', 0] },
             email: { $arrayElemAt: ['$patientInfo.email', 0] },
             phone: { $arrayElemAt: ['$patientInfo.phone', 0] },
@@ -163,6 +165,8 @@ router.put('/:id',isAdmin, async (req, res) => {
           $project: {
             _id: 0,
             patientId: 1,
+            firstName: 1,
+            lastName: 1,
             displayName: 1,
             email: 1,
             phone: 1,
