@@ -5,6 +5,7 @@ import cors from 'cors';
 import '../database/dbConnection.js'
 import middleware from './middleware.js';
 import router from './router.js';
+import { insertarPacientes } from '../database/fakeData.js';
 
 
 const app = express();
@@ -18,6 +19,8 @@ app.use(router);
 
 async function start() {
 //   await DBconnection('market');
+// await insertarPacientes() // insertar falsos pacientes ... para comprobar como de rapido va l aaplicacion para 12.000 pacientes 
+
   const timelog = new Date();
   const server = app.listen(port, async () => {
     console.log(`SERVERLOG ${timelog} --> Server started on port ${port}.`);

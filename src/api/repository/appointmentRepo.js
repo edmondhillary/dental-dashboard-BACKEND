@@ -1,14 +1,23 @@
 import appointmentsModel from "../models/appointmentsSchema.js";
 import patientModel from "../models/patientSchema.js";
 import employeeModel from "../models/employeeSchema.js";
+import twilio from "twilio";
+
 // import sessionModel from "../models/sessionSchema.js";
 import { Types } from "mongoose";
 import treatmentModel from "../models/treatmentSchema.js";
 import { checkIfPatientCanBeDeleted } from "../utilities/generalFunctions.js";
+import moment from "moment";
+
+moment.locale('es');
 const { ObjectId } = Types;
 
+const accountSid ='AC731b206fe2ba3c2e1ce7da83e094475e' ;
+const authToken ='f44713a83e551f1d1fd905c976081e1f' ;
+
+
 async function createAppointment({ fields }) {
-  const { employee, fechaInicio, fechaFin , patient, comentarios} = fields;
+  const { employee, fechaInicio, fechaFin, patient, comentarios } = fields;
 
   // Verificar si existe una cita previa para este empleado que se solape con el intervalo de tiempo de la nueva cita
   const existingAppointments = await appointmentsModel.find({
@@ -32,7 +41,12 @@ async function createAppointment({ fields }) {
   }
 
   // Crear nueva cita
-  const newAppointment = await appointmentsModel.create(fields);
+  const newAppointment = await appointmentsModel.create(fields)
+
+  const populatedAppointment = await appointmentsModel
+  .findOne({ _id: newAppointment._id })
+  .populate("patient", "phone firstName lastName _id")
+  .populate("employee", "phone firstName lastName _id");
 
   // Añadir nueva cita al paciente
   await patientModel.findOneAndUpdate(
@@ -61,6 +75,24 @@ async function createAppointment({ fields }) {
       { new: true }
     );
   }
+  const client = twilio(accountSid, authToken); // Asegúrate de tener las credenciales de Twilio configuradas
+  const formattedFechaInicio = moment(newAppointment.fechaInicio).format('dddd D [de] MMMM [de] YYYY [a las] h:mm A');
+
+  const messageBody = `✨ ¡Se ha creado una cita! ✨\n\n👨‍⚕️ Dr.(a) ${populatedAppointment.employee.lastName}\n⏰ Fecha y hora: ${formattedFechaInicio}\n🏢 Clínica Dental Lorenzo González\n📍 Dirección: Calle Manuel Candela 5 pta 1\n\n¡Estaremos esperándote para brindarte el mejor cuidado dental! Si tienes alguna pregunta o necesitas cambiar tu cita, puedes contactarnos al ☎️ 963608833 o a través de 📲 WhatsApp. 😊`;
+
+
+  const messageTo =`whatsapp:+34${populatedAppointment.patient.phone}` // Reemplaza con el numeor del paciente
+  const messageFrom = 'whatsapp:+14155238886'; // Reemplaza con tu número de teléfono de Twilio
+  
+  await client.messages
+  .create({
+    body: messageBody,
+    from: messageFrom,
+    to: messageTo,
+  })
+  .then((message) => console.log("Mensaje enviado PARA CITA CREADA: ✅ ", message.sid))
+  .catch((error) => console.error("Error al enviar el mensaje:", error));
+  console.log({messageBody}, {newAppointment})
 
   return newAppointment;
 }
@@ -146,7 +178,9 @@ async function updateAppointmentById({ id, fieldsToUpdate }) {
 
 async function deleteAppointmentById(id) {
   const query = { _id: new ObjectId(id) };
-  const deletedAppointment = await appointmentsModel.findOneAndDelete(query);
+  const deletedAppointment = await appointmentsModel.findOneAndDelete(query)
+  .populate("patient", "firstName lastName _id phone")
+  .populate("employee", "firstName lastName _id");
   const removeAppointmentFromPatient = await patientModel.findOneAndUpdate(
     { _id: deletedAppointment.patient },
     { $pull: { appointments: deletedAppointment._id } },
@@ -165,7 +199,27 @@ async function deleteAppointmentById(id) {
     appointmentsModel,
     employeeModel
   );
+  // Enviar notificación al médico
+  const client = twilio(accountSid, authToken); // Asegúrate de tener las credenciales de Twilio configuradas
+  const formattedFechaInicio = moment(deletedAppointment.fechaInicio).format('dddd D [de] MMMM [de] YYYY [a las] h:mm A');
 
+  // Enviar notificación al médico
+
+  const messageBody = `❌ ¡Cita Cancelada! ❌\n\n👨‍⚕️ Dr.(a) ${deletedAppointment.employee.lastName}\n⏰ Fecha y hora: ${formattedFechaInicio}\n🏢 Clínica Dental Lorenzo González\n📍 Dirección: Calle Manuel Candela 5 pta 1\n\nLamentamos informarle que se ha cancelado la cita programada. Si necesita programar una nueva cita o tiene alguna pregunta, no dude en comunicarse con nosotros al ☎️ 963608833 o a través de 📲 WhatsApp. ¡Gracias por su comprensión! 😊`;
+
+  const messageTo =`whatsapp:+34${deletedAppointment.patient.phone}` // Reemplaza con el número de teléfono del médico
+  const messageFrom = 'whatsapp:+14155238886.'; // Reemplaza con tu número de teléfono de Twilio
+  
+  await client.messages
+  .create({
+    body: messageBody,
+    from: messageFrom,
+    to: messageTo,
+  })
+  .then((message) => console.log("Mensaje enviado PARA CITA ELIMINADA: ✅ ", message.sid))
+  .catch((error) => console.error("Error al enviar el mensaje:", error));
+  
+  console.log({deletedAppointment}, {messageBody})
   return deletedAppointment;
 }
 export {
