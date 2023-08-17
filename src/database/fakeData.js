@@ -1,12 +1,12 @@
 import moment from "moment";
-import faker from "faker";
+import faker from "faker"; // ahora mismo voy a desinstarlar faker ya que no me gusta esta dependencia. 20/6
 import patientModel from "../api/models/patientSchema.js";
 
 // Generador de datos aleatorios utilizando Faker
 function generarDatosAleatorios() {
   const fechaNacimiento = moment(faker.date.past()).format("YYYY-MM-DD"); // Formatear la fecha de nacimiento utilizando moment
   const telefono = `+34${faker.phone.phoneNumber()}`;
-  const email = `RJ${faker.internet.email()}`;
+  const email = `JR${faker.internet.email()}`;
   const datosAleatorios = [];
 
   for (let i = 0; i < 7000; i++) {
