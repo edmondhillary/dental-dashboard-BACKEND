@@ -2,7 +2,7 @@
   "name": "backdent",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "src/server/server.js",
   "type": "module",
   "scripts": {
     "server": "nodemon src/server/server.js",
