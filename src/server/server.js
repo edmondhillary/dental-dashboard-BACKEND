@@ -10,8 +10,19 @@ import { insertarPacientes } from '../database/fakeData.js';
 
 const app = express();
 const port = process.env.PORT || 4000;
+const allowedOrigins = ['https://dental-dashboard-backend-production.up.railway.app'];
 
-app.use(cors());
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (allowedOrigins.includes(origin) || !origin) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(middleware);
