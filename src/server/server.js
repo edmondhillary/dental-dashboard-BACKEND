@@ -10,7 +10,7 @@ import { insertarPacientes } from '../database/fakeData.js';
 
 const app = express();
 const port = process.env.PORT || 4000;
-const allowedOrigins = ['https://dental-dashboard-frontend.vercel.app'];
+const allowedOrigins = ['https://dental-dashboard-frontend.vercel.app', 'http://localhost:5173'];
 
 const corsOptions = {
     origin: (origin, callback) => {
